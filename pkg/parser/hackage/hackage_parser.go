@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"github.com/google/uuid"
@@ -76,7 +78,14 @@ func readStackContent(location *model.Location) error {
 
 	for _, dep := range stackConfig.ExtraDeps {
 		if name, _, _, _, _ := parseExtraDep(dep); name != "" {
-			bom.Packages = append(bom.Packages, initHackagePackage(location, dep, ""))
+			if *bom.Arguments.Stream {
+				err := stream.Publish(initHackagePackage(location, dep, ""), stream.PackageChannel)
+				if err != nil {
+					log.Panic(err)
+				}
+			} else {
+				bom.Packages = append(bom.Packages, initHackagePackage(location, dep, ""))
+			}
 		}
 	}
 

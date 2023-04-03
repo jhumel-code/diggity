@@ -20,4 +20,5 @@ type Arguments struct {
 	ExcludedFilenames   *[]string
 	SecretExtensions    *[]string
 	Provenance          *string
+	Stream				*bool
 }

@@ -3,6 +3,7 @@ package composer
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"strings"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"github.com/google/uuid"
@@ -98,7 +100,15 @@ func parseComposerPackages(location *model.Location) error {
 			}
 		}
 		cpe.NewCPE23(pkg, vendorProduct[0], vendorProduct[1], pkg.Version)
-		bom.Packages = append(bom.Packages, pkg)
+		if *bom.Arguments.Stream {
+			err := stream.Publish(pkg, stream.PackageChannel)
+			if err != nil {
+				log.Panic(err)
+			}
+		} else {
+			bom.Packages = append(bom.Packages, pkg)
+		}
+
 	}
 
 	return nil

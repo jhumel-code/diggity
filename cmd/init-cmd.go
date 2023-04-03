@@ -53,6 +53,7 @@ var (
 		RegistryPassword:    new(string),
 		RegistryToken:       new(string),
 		Provenance:          new(string),
+		Stream:              new(bool),
 	}
 
 	log = logger.GetLogger()
@@ -216,6 +217,7 @@ func init() {
 	diggity.Flags().StringVarP(Arguments.RegistryToken, "registry-token", "", "", "Access token for private registry access")
 	diggity.Flags().StringVarP(Arguments.Provenance, "provenance", "", "", "Provenance file to include in the SBOM")
 	diggity.Flags().BoolVarP(&help, "help", "h", false, "Help for diggity")
+	diggity.Flags().BoolVar(Arguments.Stream, "stream-mode", false, "Test argument for stream mode")
 
 	// version flags
 	version.Flags().StringVarP(&versionOutputFormat, "output", "o", "text", "Format to display results ([text, json])")

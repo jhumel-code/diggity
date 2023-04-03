@@ -2,12 +2,14 @@ package dart
 
 import (
 	"errors"
+	"log"
 
 	"github.com/carbonetes/diggity/internal/cpe"
 	"github.com/carbonetes/diggity/internal/file"
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"os"
@@ -103,7 +105,14 @@ func parseDartPackages(location *model.Location) error {
 
 	parseDartPURL(pkg)
 	pkg.Metadata = metadata
-	bom.Packages = append(bom.Packages, pkg)
+	if *bom.Arguments.Stream {
+		err := stream.Publish(pkg, stream.PackageChannel)
+		if err != nil {
+			log.Panic(err)
+		}
+	} else {
+		bom.Packages = append(bom.Packages, pkg)
+	}
 	return nil
 }
 

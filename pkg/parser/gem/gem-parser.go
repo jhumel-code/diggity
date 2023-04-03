@@ -3,6 +3,7 @@ package gem
 import (
 	"bufio"
 	"errors"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/carbonetes/diggity/internal/file"
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"github.com/google/uuid"
@@ -79,7 +81,14 @@ func readGemLockContent(location *model.Location) error {
 					LayerHash: location.LayerHash,
 				})
 
-				bom.Packages = append(bom.Packages, pkg)
+				if *bom.Arguments.Stream {
+					err := stream.Publish(pkg, stream.PackageChannel)
+					if err != nil {
+						log.Panic(err)
+					}
+				} else {
+					bom.Packages = append(bom.Packages, pkg)
+				}
 			}
 		}
 	}

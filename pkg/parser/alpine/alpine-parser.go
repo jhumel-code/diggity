@@ -2,11 +2,13 @@ package alpine
 
 import (
 	"errors"
+	"log"
 
 	"github.com/carbonetes/diggity/internal/cpe"
 	"github.com/carbonetes/diggity/internal/file"
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"io"
@@ -241,7 +243,14 @@ func parseInstalledPackages(filename string, layer string) error {
 
 			// Check if package is not empty before append
 			if pkg.Name != "" && pkg.Version != "" {
-				bom.Packages = append(bom.Packages, pkg)
+				if *bom.Arguments.Stream {
+					err := stream.Publish(pkg, stream.PackageChannel)
+					if err != nil {
+						log.Panic(err)
+					}
+				} else {
+					bom.Packages = append(bom.Packages, pkg)
+				}
 			}
 
 			files = []model.File{}

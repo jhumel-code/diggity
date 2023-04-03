@@ -8,6 +8,7 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -19,6 +20,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"github.com/google/uuid"
@@ -64,7 +66,16 @@ func FindJavaPackagesFromContent() {
 				}
 			}
 		}
-		bom.Packages = append(bom.Packages, maps.Values(Result)...)
+		if *bom.Arguments.Stream {
+			for _, p := range maps.Values(Result) {
+				err := stream.Publish(p, stream.PackageChannel)
+				if err != nil {
+					log.Panic(err)
+				}
+			}
+		} else {
+			bom.Packages = append(bom.Packages, maps.Values(Result)...)
+		}
 	}
 	defer bom.WG.Done()
 }

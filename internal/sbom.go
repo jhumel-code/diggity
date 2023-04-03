@@ -1,7 +1,9 @@
 package sbom
 
 import (
+	"encoding/json"
 	"strings"
+	"time"
 
 	"github.com/carbonetes/diggity/internal/docker"
 	"github.com/carbonetes/diggity/internal/file"
@@ -10,6 +12,8 @@ import (
 	"github.com/carbonetes/diggity/internal/ui"
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/parser"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
+	tm "github.com/vmware/transport-go/model"
 
 	"os"
 
@@ -31,6 +35,7 @@ var (
 
 // Start SBOM extraction
 func Start(arguments *model.Arguments) {
+	start := time.Now()
 	if *arguments.Quiet {
 		log = logger.SetQuietMode(log)
 	}
@@ -41,6 +46,25 @@ func Start(arguments *model.Arguments) {
 	}
 
 	extractSpinner := ui.InitSpinner(spinnerMsg)
+
+	if *arguments.Stream {
+		handler, err := stream.Subscribe(stream.PackageChannel)
+		if err != nil {
+			log.Error(err)
+		}
+
+		handler.Handle(func(m *tm.Message) {
+			pkg, _ := json.MarshalIndent(m.Payload, "", " ")
+			log.Printf("%s\n", pkg)
+		}, func(err error) {
+			log.Error(err)
+		})
+
+		extractImage(source, arguments, extractSpinner)
+		parser.Start(arguments)
+		log.Printf("\nScanning finished in %.2fs", time.Since(start).Seconds())
+		os.Exit(0)
+	}
 	//Extract Image
 	if !*arguments.Quiet {
 		// Pull (if needed) and Extract Image
@@ -58,6 +82,7 @@ func Start(arguments *model.Arguments) {
 
 	//Print Results and Cleanup
 	output.PrintResults()
+	log.Printf("\nScanning finished in %.2fs", time.Since(start).Seconds())
 }
 
 // Extract image

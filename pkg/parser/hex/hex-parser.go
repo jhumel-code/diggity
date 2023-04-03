@@ -3,6 +3,7 @@ package parser
 import (
 	"bufio"
 	"errors"
+	"log"
 	"regexp"
 
 	"github.com/carbonetes/diggity/internal/cpe"
@@ -10,6 +11,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 	"github.com/google/uuid"
 
@@ -84,7 +86,14 @@ func parseHexRebarPacakges(location *model.Location) error {
 
 		}
 		if pkg.Name != "" {
-			bom.Packages = append(bom.Packages, pkg)
+			if *bom.Arguments.Stream {
+				err := stream.Publish(pkg, stream.PackageChannel)
+				if err != nil {
+					log.Panic(err)
+				}
+			} else {
+				bom.Packages = append(bom.Packages, pkg)
+			}
 		}
 
 	}

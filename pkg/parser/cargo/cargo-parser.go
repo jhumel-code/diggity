@@ -3,6 +3,7 @@ package cargo
 import (
 	"bufio"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"strings"
@@ -101,7 +103,14 @@ func readCargoContent(location *model.Location) error {
 
 	// Parse packages before EOF
 	if metadata["name"] != nil {
-		bom.Packages = append(bom.Packages, initRustPackage(location, metadata))
+		if *bom.Arguments.Stream {
+			err := stream.Publish(initRustPackage(location, metadata), stream.PackageChannel)
+			if err != nil {
+				log.Panic(err)
+			}
+		} else {
+			bom.Packages = append(bom.Packages, initRustPackage(location, metadata))
+		}
 	}
 
 	return nil

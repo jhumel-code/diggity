@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/carbonetes/diggity/pkg/model"
 	"github.com/carbonetes/diggity/pkg/model/metadata"
 	"github.com/carbonetes/diggity/pkg/parser/bom"
+	"github.com/carbonetes/diggity/pkg/parser/stream"
 	"github.com/carbonetes/diggity/pkg/parser/util"
 
 	"github.com/google/uuid"
@@ -96,7 +98,14 @@ func readConanLockContent(location *model.Location) error {
 	if len(conanLockMetadata.GraphLock.Nodes) > 0 {
 		for _, conanPkg := range conanLockMetadata.GraphLock.Nodes {
 			if conanPkg.Ref != "" {
-				bom.Packages = append(bom.Packages, initConanPackage(location, conanPkg))
+				if *bom.Arguments.Stream {
+					err := stream.Publish(initConanPackage(location, conanPkg), stream.PackageChannel)
+					if err != nil {
+						log.Panic(err)
+					}
+				} else {
+					bom.Packages = append(bom.Packages, initConanPackage(location, conanPkg))
+				}
 			}
 		}
 	}
